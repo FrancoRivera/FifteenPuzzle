@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fifteen puzzle</title>
+    
+    <link rel="stylesheet" href="https://cdn.staticfile.org/tailwindcss/1.8.11/tailwind.min.css">
+
+    <style>
+        .game-grid{
+            width: 33rem;
+            background: rgb(6, 1, 71);
+        }
+        .game-grid .square{
+            height: 8rem;
+            width:  8rem;
+            background-image: url('image.jpg');
+            background-size: 33rem 33rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex items-end">
+        <div class="grid gap-1 grid-cols-4 font-bold text-3xl text-center game-grid"></div>
+        <div class="ml-10">
+            Original image: <img src="/image.jpg" alt="astronaut in space" class="w-40">
+        </div>
+        <div>
+    </div>
+</body>
+    <script>
+        	// Convenience functions to reduce verbosity
+    
+        var qa = function ( elem ) {
+            return document.querySelectorAll( elem );
+        }
+        
+        var q = function ( elem ) {
+            return document.querySelector( elem );
+        }
+
+
+        var parseHTML = function(str) {
+            var tmp = document.implementation.createHTMLDocument();
+            tmp.body.innerHTML = str;
+            return tmp.body.children[0];
+        };
+
+
+        let gridSideSize = 4;
+        let blankPosX = 3;
+        let blankPosY = 3;
+        let gameStarted = false;
+
+        drawGrid();
+        randomBlankPosition()
+
+        qa(".game-grid .square").forEach(el => {
+            el.addEventListener('click', (event) => {
+                if (blankPosX ==  event.target.getAttribute('data-x') ||
+                    blankPosY ==  event.target.getAttribute('data-y'))
+                    moveBlank(event.target.getAttribute('data-x'), event.target.getAttribute('data-y'))
+            })
+        }
+        )
+
+        function labelGrid(){
+            let countX = 0;
+            let countY = 0;
+            qa(".game-grid .square").forEach( el => {
+                el.setAttribute('data-x', countX)
+                el.setAttribute('data-y', countY)
+                countX++;
+                if(countX == gridSideSize){
+                    countX = 0;
+                    countY++;
+                }
+            })
+        }
+        function moveBlank(x, y){
+            if(x == blankPosX){
+            // move vertically
+
+                if ( y > blankPosY){
+                    // move blank to the right
+                    swapItems(blankPosX, blankPosY, blankPosX, blankPosY + 1);
+                    blankPosY = blankPosY + 1;
+                }
+                else{
+                    // move blank to the left
+                    swapItems(blankPosX, blankPosY, blankPosX, blankPosY - 1);
+                    blankPosY = blankPosY - 1;
+                }
+            } else if(y == blankPosY){
+                if ( x > blankPosX){
+                    // move blank to the right
+                    swapItems(blankPosX, blankPosY, blankPosX + 1, blankPosY);
+                    blankPosX = blankPosX + 1;
+                }
+                else{
+                    // move blank to the left
+                    swapItems(blankPosX, blankPosY, blankPosX - 1, blankPosY);
+                    blankPosX = blankPosX - 1;
+                }
+            }
+            checkWinningCondition()
+        }
+        function getSquareFromCoordinates(x,y){
+            return q(".game-grid .square[data-x='"+x+"'][data-y='"+y+"']")
+        }
+        function swapItems(x1, y1, x2, y2){
+            let from = getSquareFromCoordinates(x1,y1)
+            let to = getSquareFromCoordinates(x2,y2)
+            if (!(from && to)){ return;}
+
+            from.classList.remove('bg-gray-500', 'opacity-0')
+            from.classList.add('bg-red-500')
+
+            to.classList.add('bg-gray-500', 'opacity-0')
+            to.classList.remove('bg-red-500')
+            
+            let pos = to.style.backgroundPosition
+            let fromNumber = from.getAttribute('data-number')
+            let toNumber = to.getAttribute('data-number')
+            from.setAttribute('data-number', toNumber)
+            to.setAttribute('data-number', fromNumber)
+            to.style.backgroundPosition = "999rem 999rem"
+            from.style.backgroundPosition = (-8 * x1) + "rem " + (-8 * y1) + "rem"
+            from.style.backgroundPosition = pos
+        }
+        function drawGrid(){
+            for( var i = 0; i < gridSideSize * gridSideSize; i++){
+                if (i == (blankPosX + gridSideSize * blankPosY) ){
+                    let blank =  parseHTML(`<button class="bg-gray-500 text-white square py-10 opacity-0" data-number="16"></button>`)
+                    q(".game-grid").appendChild(blank)
+                    continue;
+                }
+                let html = `<button class="bg-red-500 text-white square py-10" data-number="${i+1}"></button>`
+                let el = parseHTML(html)
+                el.style.backgroundPosition = -8 * (i % gridSideSize) + "rem " + (-8 * parseInt(i / gridSideSize))  + "rem"
+                q(".game-grid").append(el)
+                // blank. background-position: 8rem 8rem;
+            }
+
+            labelGrid();
+        }
+
+        function randomBlankPosition(){
+            let steps = 1000;
+
+            for(var i = 0; i < steps; i++){
+                moveBlank(parseInt(Math.random() * gridSideSize), parseInt(Math.random() * gridSideSize))
+            }
+            gameStarted = true;
+        }
+        function checkWinningCondition(){
+            let won = true;
+            qa(".game-grid .square").forEach( el => {
+                let x = parseInt(el.getAttribute('data-x'))
+                let y = parseInt(el.getAttribute('data-y'))
+                let number = parseInt(el.getAttribute('data-number'))
+                if(number != 16 && x + y * gridSideSize != number - 1){
+                    won = false;
+                }
+            })
+             if(gameStarted && won) alert("Congratulations, you won!")
+        }
+        
+        
+        
+    </script>
+</html>
